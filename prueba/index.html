@@ -811,13 +811,12 @@
             color: #ff6b6b;
         `;
         warning.innerHTML = `
-            <strong>❌ ERROR: ${missing.length} Pokémon no encontrados</strong><br>
+            <strong>❌ ERROR: ${missing.length} Pokemon not found</strong><br>
             <span style="color:#ff8787;font-size:0.9em;display:block;margin:8px 0;">
                 ${missing.map(n => `"${n}"`).join(', ')}
             </span>
             <small style="color:#ffa8a8;font-size:0.85em;">
-                Estos nombres en <strong>dexorder.txt</strong> no coinciden con <strong>pokemon.txt</strong>.<br>
-                Aparecerán como tarjetas de ERROR (rojas).
+                This pokemons in <strong>dexorder.txt</strong> aint in <strong>pokemon.txt</strong>.<br>
             </small>
         `;
         const container = document.querySelector('.container');
@@ -943,8 +942,8 @@
                 <div class="types">
                     <span class="type-badge" style="background:#c92a2a;color:white;">⚠️ ERROR</span>
                 </div>
-                <div class="bst" style="color:#ff6b6b;">DATOS FALTANTES</div>
-                <div style="font-size:0.7em;color:#666;margin-top:5px;">Revisa dexorder.txt</div>
+                <div class="bst" style="color:#ff6b6b;">Missing Info</div>
+                <div style="font-size:0.7em;color:#666;margin-top:5px;">Might come in the future</div>
             </div>
         `;
     }
@@ -1025,12 +1024,8 @@
                 <span class="type-badge" style="background:#c92a2a;color:white;">⚠️ ERROR</span>
             </div>
             <div class="pokedex-entry" style="border:2px solid #c92a2a;background:rgba(200,50,50,0.2);color:#ff8787;">
-                <strong>❌ DATOS FALTANTES</strong><br><br>
-                El Pokémon <strong>"${p.nombre}"</strong> está listado en <strong>dexorder.txt</strong>
-                pero no existe en <strong>pokemon.txt</strong>.<br><br>
-                <small style="color:#ffa8a8;">
-                    Verifica que el nombre coincida EXACTAMENTE (incluyendo mayúsculas/minúsculas).
-                </small>
+                <strong>❌ Missing info</strong><br><br>
+                <strong>"${p.nombre}"</strong> is listed but not yet added</strong>.<br><br>
             </div>
         `;
         modal.classList.add('active');
