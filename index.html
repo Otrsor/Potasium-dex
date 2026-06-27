@@ -811,12 +811,12 @@
             color: #ff6b6b;
         `;
         warning.innerHTML = `
-            <strong>❌ ERROR: ${missing.length} Pokemon not found</strong><br>
+            <strong> ${missing.length} Pokemon not yet added</strong><br>
             <span style="color:#ff8787;font-size:0.9em;display:block;margin:8px 0;">
                 ${missing.map(n => `"${n}"`).join(', ')}
             </span>
             <small style="color:#ffa8a8;font-size:0.85em;">
-                This pokemons in <strong>dexorder.txt</strong> aint in <strong>pokemon.txt</strong>.<br>
+                This pokemons may come in the future, names might change.<br>
             </small>
         `;
         const container = document.querySelector('.container');
