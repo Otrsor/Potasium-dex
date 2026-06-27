@@ -546,7 +546,7 @@
                         switch (cleanKey) {
                             case 'Name':
                                 pokemon.nombre = cleanValue;
-                                pokemon.imagen = `images/${cleanValue}.png`;
+                                pokemon.imagen = `images/${cleanValue.toUpperCase()}.png`;
                                 break;
                             case 'Types':
                                 pokemon.tipos = cleanValue.split(',').map(t => t.trim().toLowerCase());
