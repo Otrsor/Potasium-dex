@@ -639,7 +639,6 @@
                                 pokemon.evolucion = cleanValue;
                                 pokemon.evolucionData = parseEvolution(cleanValue);
                                 break;
-                                break;
                             case 'WildItemCommon':
                                 pokemon.wildItemCommon = cleanValue;
                                 break;
@@ -697,8 +696,14 @@ function parseEvolution(evolutionText) {
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         
-        // Si la parte está completamente en mayúsculas → es un Pokémon
-        if (part === part.toUpperCase() && part.length > 0) {
+        // Si la parte está completamente en mayúsculas Y tiene al menos una letra → es un Pokémon
+        // (los números como "15" NO se consideran Pokémon)
+        const isPokemonName = part === part.toUpperCase() && 
+                              part.length > 0 && 
+                              /[A-Z]/.test(part) && // tiene al menos una letra
+                              !/^[0-9]+$/.test(part); // no es solo números
+        
+        if (isPokemonName) {
             // Guardar la evolución anterior
             if (currentEvo) {
                 if (buffer.length > 0) {
@@ -746,55 +751,6 @@ function parseEvolution(evolutionText) {
     
     return evolutions;
 }
-        // ============================================================
-        //  📥  LOAD ALL FILES
-        // ============================================================
-
-        function loadAllData() {
-            let pokemonMap = {};
-            let dexList = [];
-
-            fetch('pokemon.txt')
-                .then(response => {
-                    if (!response.ok) throw new Error('Could not load pokemon.txt');
-                    return response.text();
-                })
-                .then(text => {
-                    pokemonMap = parsePokemonFile(text);
-                    return fetch('dexorder.txt');
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        console.warn('dexorder.txt not found, using alphabetical order');
-                        dexList = Object.keys(pokemonMap).sort();
-                        return null;
-                    }
-                    return response.text();
-                })
-                .then(text => {
-                    if (text !== null) {
-                        dexList = parseDexOrder(text);
-                    }
-                    buildPokedex(pokemonMap, dexList);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    grid.innerHTML = `
-                        <div class="error-box" style="grid-column:1/-1;">
-                            <span class="icon">❌</span>
-                            <div class="title">Error loading files</div>
-                            <div class="detail">
-                                Make sure <strong>pokemon.txt</strong> and <strong>dexorder.txt</strong>
-                                are in the same folder as this HTML.<br>
-                                <br>
-                                <strong>Details:</strong> ${error.message}
-                            </div>
-                        </div>
-                    `;
-                    resultsInfo.textContent = 'Error loading data';
-                });
-        }
-
         // ============================================================
         //  🏗️  BUILD POKEDEX
         // ============================================================
