@@ -7231,8 +7231,8 @@ Pokedex = It expels all the trash that it swallows once per day, liberating a ga
 WildItemCommon = MYSTICWATER
 WildItemUncommon = BLACKSLUDGE
 #-------------------------------
-[MANKYTA]
-Name = Mankyta
+[Mankyte]
+Name = Mankyte
 Types = FLYING
 BaseStats = 45,57,55,58,52,57
 GenderRatio = Female50Percent
