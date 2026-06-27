@@ -1223,10 +1223,13 @@ function parseEvolution(evolutionText) {
         ${itemsHtml}
         ${extraHtml}
 
-        ${p.evolucionData && p.evolucionData.length > 0 ? `
+       ${p.evolucionData && p.evolucionData.length > 0 ? `
     <div class="section-title">🔄 Evolution${p.evolucionData.length > 1 ? 's' : ''}</div>
     <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:15px;background:rgba(245,200,66,0.05);border-radius:10px;border:1px solid rgba(245,200,66,0.2);">
         ${p.evolucionData.map((evo) => {
+            // Si no tiene target, saltar esta evolución
+            if (!evo.target) return '';
+            
             const evoName = evo.target;
             const evoPokemon = pokemonData.find(poke => poke.nombre.toLowerCase() === evoName.toLowerCase());
             const evoImage = evoPokemon ? evoPokemon.imagen : `images/${evoName}.png`;
@@ -1246,7 +1249,7 @@ function parseEvolution(evolutionText) {
                     <div style="font-size:0.7em;color:#888;">(clic para ver)</div>
                 </div>
             `;
-        }).join('')}
+        }).filter(html => html !== '').join('')}
     </div>
 ` : ''}
 
