@@ -682,75 +682,113 @@
                 .filter(l => l && !l.startsWith('#'));
         }
         // ============================================================
-        //  🧬  EVOLUTION PARSER
+        //  🧬  EVOLUTION PARSER (English)
         // ============================================================
         
-function parseEvolution(evolutionText) {
-    if (!evolutionText || evolutionText === '---') return [];
-    
-    const parts = evolutionText.split(',').map(s => s.trim());
-    const evolutions = [];
-    let currentEvo = null;
-    let buffer = [];
-    
-    for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        
-        // Si la parte está completamente en mayúsculas Y tiene al menos una letra → es un Pokémon
-        // (los números como "15" NO se consideran Pokémon)
-        const isPokemonName = part === part.toUpperCase() && 
-                              part.length > 0 && 
-                              /[A-Z]/.test(part) && // tiene al menos una letra
-                              !/^[0-9]+$/.test(part); // no es solo números
-        
-        if (isPokemonName) {
-            // Guardar la evolución anterior
-            if (currentEvo) {
-                if (buffer.length > 0) {
-                    currentEvo.condition = buffer.join(', ');
-                    buffer = [];
-                }
-                evolutions.push(currentEvo);
-            }
-            // Iniciar nueva evolución
-            currentEvo = {
-                target: part,
-                method: null,
-                condition: null
-            };
-        } else {
-            // Si no hay evolución actual, la creamos (por si el formato es raro)
-            if (!currentEvo) {
-                currentEvo = {
-                    target: null,
-                    method: null,
-                    condition: null
-                };
-            }
+        function parseEvolution(evolutionText) {
+            if (!evolutionText || evolutionText === '---') return [];
             
-            // Acumular método y condición
-            if (!currentEvo.method) {
-                currentEvo.method = part;
-            } else {
-                buffer.push(part);
+            try {
+                const parts = evolutionText.split(',').map(s => s.trim());
+                const evolutions = [];
+                let currentEvo = null;
+                let buffer = [];
+                
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i];
+                    
+                    // Check if part is a Pokémon name (uppercase with letters)
+                    const isPokemonName = part === part.toUpperCase() && 
+                                          part.length > 0 && 
+                                          /[A-Z]/.test(part) && 
+                                          !/^[0-9]+$/.test(part);
+                    
+                    if (isPokemonName) {
+                        if (currentEvo) {
+                            if (buffer.length > 0) {
+                                currentEvo.condition = buffer.join(', ');
+                                buffer = [];
+                            }
+                            evolutions.push(currentEvo);
+                        }
+                        currentEvo = {
+                            target: part,
+                            method: null,
+                            condition: null
+                        };
+                    } else {
+                        if (!currentEvo) {
+                            currentEvo = {
+                                target: null,
+                                method: null,
+                                condition: null
+                            };
+                        }
+                        
+                        if (!currentEvo.method) {
+                            currentEvo.method = part;
+                        } else {
+                            buffer.push(part);
+                        }
+                    }
+                }
+                
+                if (currentEvo) {
+                    if (buffer.length > 0) {
+                        currentEvo.condition = buffer.join(', ');
+                    }
+                    if (!currentEvo.target) {
+                        currentEvo.target = '???';
+                    }
+                    evolutions.push(currentEvo);
+                }
+                
+                return evolutions;
+                
+            } catch (error) {
+                console.warn('Error parsing evolutions:', evolutionText, error);
+                return [];
             }
         }
-    }
-    
-    // Guardar la última evolución
-    if (currentEvo) {
-        if (buffer.length > 0) {
-            currentEvo.condition = buffer.join(', ');
+        
+        function getEvolutionMethodText(method, condition) {
+            if (!method) return 'Evolves';
+            
+            const methodMap = {
+                'Level': condition ? `Level ${condition}` : 'Level',
+                'LevelMale': condition ? `Level ${condition} (Male)` : 'Level (Male)',
+                'LevelFemale': condition ? `Level ${condition} (Female)` : 'Level (Female)',
+                'LevelRain': 'Level (Rain)',
+                'Happiness': 'Happiness',
+                'Item': condition ? `Use ${condition}` : 'Use item',
+                'Trade': 'Trade',
+                'TradeItem': condition ? `Trade with ${condition}` : 'Trade with item',
+                'TradeFemale': 'Trade (Female)',
+                'TradeMale': 'Trade (Male)',
+                'HasMove': condition ? `Know ${condition}` : 'Know a move',
+                'HasMoveType': condition ? `Know ${condition}-type move` : 'Know a move type',
+                'HasInParty': condition ? `Have ${condition} in party` : 'Have in party',
+                'LocationFlag': condition ? `At ${condition}` : 'At special location',
+                'Effort': 'Effort',
+                'HoldItem': condition ? `Hold ${condition}` : 'Hold item',
+                'DayHoldItem': condition ? `Hold ${condition} during day` : 'Hold item during day',
+                'TimeDay': 'During the day',
+                'TimeNight': 'During the night',
+                'TimeDusk': 'At dusk',
+            };
+            
+            return methodMap[method] || method;
         }
-        // Si no tiene target, asignar un valor por defecto
-        if (!currentEvo.target) {
-            currentEvo.target = '???';
+        
+        function openModalByName(name) {
+            if (!name) return;
+            const pokemon = pokemonData.find(p => p.nombre.toLowerCase() === name.toLowerCase());
+            if (pokemon) {
+                openModal(pokemon.id);
+            } else {
+                console.warn(`Pokémon "${name}" not found in data`);
+            }
         }
-        evolutions.push(currentEvo);
-    }
-    
-    return evolutions;
-}
         // ============================================================
         //  🏗️  BUILD POKEDEX
         // ============================================================
