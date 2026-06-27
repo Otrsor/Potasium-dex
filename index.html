@@ -697,42 +697,49 @@ function parseEvolution(evolutionText) {
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         
-        // Si la parte está completamente en mayúsculas y no tiene espacios → es un Pokémon
-        if (part === part.toUpperCase() && part.length > 0 && !part.includes(' ')) {
-            // Si ya teníamos una evolución en proceso (con método y condición), la guardamos
+        // Si la parte está completamente en mayúsculas → es un Pokémon
+        if (part === part.toUpperCase() && part.length > 0) {
+            // Guardar la evolución anterior
             if (currentEvo) {
-                // Si hay buffer, es que la condición se partió en varias partes
                 if (buffer.length > 0) {
                     currentEvo.condition = buffer.join(', ');
                     buffer = [];
                 }
                 evolutions.push(currentEvo);
             }
-            // Iniciamos nueva evolución
+            // Iniciar nueva evolución
             currentEvo = {
                 target: part,
                 method: null,
                 condition: null
             };
         } else {
-            // Si no está en mayúsculas, es parte del método o condición
-            if (currentEvo) {
-                if (!currentEvo.method) {
-                    // Primer elemento no-mayúscula → es el método
-                    currentEvo.method = part;
-                } else {
-                    // Ya tenemos método, esto es parte de la condición
-                    // Acumulamos en buffer por si la condición tiene comas
-                    buffer.push(part);
-                }
+            // Si no hay evolución actual, la creamos (por si el formato es raro)
+            if (!currentEvo) {
+                currentEvo = {
+                    target: null,
+                    method: null,
+                    condition: null
+                };
+            }
+            
+            // Acumular método y condición
+            if (!currentEvo.method) {
+                currentEvo.method = part;
+            } else {
+                buffer.push(part);
             }
         }
     }
     
-    // Guardar la última evolución (con su condición acumulada)
+    // Guardar la última evolución
     if (currentEvo) {
         if (buffer.length > 0) {
             currentEvo.condition = buffer.join(', ');
+        }
+        // Si no tiene target, asignar un valor por defecto
+        if (!currentEvo.target) {
+            currentEvo.target = '???';
         }
         evolutions.push(currentEvo);
     }
