@@ -637,6 +637,8 @@
                                 break;
                             case 'Evolutions':
                                 pokemon.evolucion = cleanValue;
+                                pokemon.evolucionData = parseEvolution(cleanValue);
+                                break;
                                 break;
                             case 'WildItemCommon':
                                 pokemon.wildItemCommon = cleanValue;
@@ -680,7 +682,94 @@
                 .map(l => l.trim())
                 .filter(l => l && !l.startsWith('#'));
         }
-
+        // ============================================================
+        //  🧬  EVOLUTION PARSER
+        // ============================================================
+        
+        function parseEvolution(evolutionText) {
+            if (!evolutionText || evolutionText === '---') return [];
+            
+            const parts = evolutionText.split(',').map(s => s.trim());
+            const evolutions = [];
+            let currentEvo = null;
+            
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                
+                // Si la parte está completamente en mayúsculas → es un Pokémon
+                if (part === part.toUpperCase() && part.length > 0 && !part.includes(' ')) {
+                    // Si ya teníamos una evolución en proceso, la guardamos
+                    if (currentEvo) {
+                        evolutions.push(currentEvo);
+                    }
+                    // Iniciamos una nueva evolución con este Pokémon
+                    currentEvo = {
+                        target: part,
+                        method: null,
+                        condition: null
+                    };
+                } else {
+                    // Si no está en mayúsculas, es parte de la condición/método
+                    if (currentEvo) {
+                        if (!currentEvo.method) {
+                            currentEvo.method = part;
+                        } else {
+                            if (currentEvo.condition) {
+                                currentEvo.condition += `, ${part}`;
+                            } else {
+                                currentEvo.condition = part;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Guardar la última evolución
+            if (currentEvo) {
+                evolutions.push(currentEvo);
+            }
+            
+            return evolutions;
+        }
+        
+        function getEvolutionMethodText(method, condition) {
+            if (!method) return 'Evoluciona';
+            
+            const methodMap = {
+                'Level': condition ? `Nivel ${condition}` : 'Nivel',
+                'LevelMale': condition ? `Nivel ${condition} (Macho)` : 'Nivel (Macho)',
+                'LevelFemale': condition ? `Nivel ${condition} (Hembra)` : 'Nivel (Hembra)',
+                'LevelRain': 'Nivel (Lluvia)',
+                'Happiness': 'Felicidad',
+                'Item': condition ? `Usar ${condition}` : 'Usar objeto',
+                'Trade': 'Intercambio',
+                'TradeItem': condition ? `Intercambio con ${condition}` : 'Intercambio con objeto',
+                'TradeFemale': 'Intercambio (Hembra)',
+                'TradeMale': 'Intercambio (Macho)',
+                'HasMove': condition ? `Conocer ${condition}` : 'Conocer movimiento',
+                'HasMoveType': condition ? `Conocer movimiento tipo ${condition}` : 'Conocer movimiento de tipo',
+                'HasInParty': condition ? `Tener ${condition} en el equipo` : 'Tener en el equipo',
+                'LocationFlag': condition ? `En ${condition}` : 'En ubicación especial',
+                'Effort': 'Esfuerzo',
+                'HoldItem': condition ? `Llevar ${condition}` : 'Llevar objeto',
+                'DayHoldItem': condition ? `Día llevando ${condition}` : 'Día llevando objeto',
+                'TimeDay': 'Durante el día',
+                'TimeNight': 'Durante la noche',
+                'TimeDusk': 'Al atardecer',
+            };
+            
+            if (methodMap[method]) return methodMap[method];
+            return condition ? `${method} (${condition})` : method;
+        }
+        
+        function openModalByName(name) {
+            const pokemon = pokemonData.find(p => p.nombre.toLowerCase() === name.toLowerCase());
+            if (pokemon) {
+                openModal(pokemon.id);
+            } else {
+                console.warn(`Pokémon "${name}" no encontrado en los datos`);
+            }
+        }
         // ============================================================
         //  📥  LOAD ALL FILES
         // ============================================================
@@ -1158,10 +1247,32 @@
         ${itemsHtml}
         ${extraHtml}
 
-        ${p.evolucion && p.evolucion !== '---' ? `
-            <div class="section-title">🔄 Evolution</div>
-            <div class="evolution">${p.evolucion}</div>
-        ` : ''}
+        ${p.evolucionData && p.evolucionData.length > 0 ? `
+    <div class="section-title">🔄 Evolution${p.evolucionData.length > 1 ? 's' : ''}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:15px;background:rgba(245,200,66,0.05);border-radius:10px;border:1px solid rgba(245,200,66,0.2);">
+        ${p.evolucionData.map((evo) => {
+            const evoName = evo.target;
+            const evoPokemon = pokemonData.find(poke => poke.nombre.toLowerCase() === evoName.toLowerCase());
+            const evoImage = evoPokemon ? evoPokemon.imagen : `images/${evoName}.png`;
+            const methodText = getEvolutionMethodText(evo.method, evo.condition);
+            
+            return `
+                <div style="text-align:center;cursor:pointer;flex:1;min-width:100px;max-width:160px;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;transition:0.2s;"
+                     onclick="openModalByName('${evoName}')"
+                     onmouseover="this.style.transform='scale(1.05)';this.style.background='rgba(245,200,66,0.15)';"
+                     onmouseout="this.style.transform='scale(1)';this.style.background='rgba(0,0,0,0.2)';">
+                    <div style="font-size:0.8em;color:#f5c842;margin-bottom:6px;font-weight:bold;">→ ${methodText}</div>
+                    <img src="${evoImage}" 
+                         alt="${evoName}" 
+                         style="width:70px;height:70px;border-radius:50%;background:#1a2a5e;padding:5px;object-fit:contain;border:2px solid #f5c842;transition:0.2s;"
+                         onerror="this.src='images/000.png';">
+                    <div style="font-size:0.9em;color:#f5c842;margin-top:4px;">${evoName}</div>
+                    <div style="font-size:0.7em;color:#888;">(clic para ver)</div>
+                </div>
+            `;
+        }).join('')}
+    </div>
+` : ''}
 
         <div class="section-title">📖 Pokedex Entry</div>
         <div class="pokedex-entry">${p.pokedex}</div>
