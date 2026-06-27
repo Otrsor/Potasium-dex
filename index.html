@@ -682,7 +682,7 @@
                 .filter(l => l && !l.startsWith('#'));
         }
         // ============================================================
-        //  🧬  EVOLUTION PARSER (English)
+        //  🧬  EVOLUTION PARSER 
         // ============================================================
         
         function parseEvolution(evolutionText) {
@@ -788,6 +788,54 @@
             } else {
                 console.warn(`Pokémon "${name}" not found in data`);
             }
+        }
+        // ============================================================
+        //  📥  LOAD ALL DATA
+        // ============================================================
+        
+        function loadAllData() {
+            let pokemonMap = {};
+            let dexList = [];
+        
+            fetch('pokemon.txt')
+                .then(response => {
+                    if (!response.ok) throw new Error('Could not load pokemon.txt');
+                    return response.text();
+                })
+                .then(text => {
+                    pokemonMap = parsePokemonFile(text);
+                    return fetch('dexorder.txt');
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        console.warn('dexorder.txt not found, using alphabetical order');
+                        dexList = Object.keys(pokemonMap).sort();
+                        return null;
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    if (text !== null) {
+                        dexList = parseDexOrder(text);
+                    }
+                    buildPokedex(pokemonMap, dexList);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    grid.innerHTML = `
+                        <div class="error-box" style="grid-column:1/-1;">
+                            <span class="icon">❌</span>
+                            <div class="title">Error loading files</div>
+                            <div class="detail">
+                                Make sure <strong>pokemon.txt</strong> and <strong>dexorder.txt</strong>
+                                are in the same folder as this HTML.<br>
+                                <br>
+                                <strong>Details:</strong> ${error.message}
+                            </div>
+                        </div>
+                    `;
+                    resultsInfo.textContent = 'Error loading data';
+                });
         }
         // ============================================================
         //  🏗️  BUILD POKEDEX
