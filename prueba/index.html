@@ -884,17 +884,34 @@
             if (pageItems.length === 0) {
                 grid.innerHTML = `<div class="no-results" style="grid-column:1/-1;"><span>🔍</span>No Pokémon found</div>`;
             } else {
-                grid.innerHTML = pageItems.map(p => `
-                    <div class="pokemon-card" onclick="openModal(${p.id})">
-                        <span class="id">#${String(p.id).padStart(3, '0')}</span>
-                        <div class="nombre">${p.nombre}</div>
-                        <div class="types">
-                            ${p.tipos.map(t => `<span class="type-badge ${getTypeClass(t)}">${t}</span>`).join('')}
-                        </div>
-                        <div class="bst">BST: ${p.bst}</div>
-                        <div class="bst-bar"><div class="fill" style="width:${Math.min((p.bst/780)*100, 100)}%"></div></div>
-                    </div>
-                `).join('');
+                grid.innerHTML = pageItems.map(p => {
+    // Si el Pokémon tiene datos faltantes, mostrar tarjeta roja
+    if (p.isMissing) {
+        return `
+            <div class="pokemon-card" style="border-color:#c92a2a;background:linear-gradient(145deg,#2a0a0a,#1a0505);" onclick="openModal(${p.id})">
+                <span class="id">#${String(p.id).padStart(3, '0')}</span>
+                <div class="nombre" style="color:#ff6b6b;">❌ ${p.nombre}</div>
+                <div class="types">
+                    <span class="type-badge" style="background:#c92a2a;color:white;">⚠️ ERROR</span>
+                </div>
+                <div class="bst" style="color:#ff6b6b;">DATOS FALTANTES</div>
+                <div style="font-size:0.7em;color:#666;margin-top:5px;">Revisa dexorder.txt</div>
+            </div>
+        `;
+    }
+    // Tarjeta normal para Pokémon con datos
+    return `
+        <div class="pokemon-card" onclick="openModal(${p.id})">
+            <span class="id">#${String(p.id).padStart(3, '0')}</span>
+            <div class="nombre">${p.nombre}</div>
+            <div class="types">
+                ${p.tipos.map(t => `<span class="type-badge ${getTypeClass(t)}">${t}</span>`).join('')}
+            </div>
+            <div class="bst">BST: ${p.bst}</div>
+            <div class="bst-bar"><div class="fill" style="width:${Math.min((p.bst/780)*100, 100)}%"></div></div>
+        </div>
+    `;
+}).join('');
             }
 
             renderPagination(totalPages, totalItems);
@@ -947,137 +964,158 @@
         // ============================================================
 
         function openModal(id) {
-            const p = pokemonData.find(p => p.id === id);
-            if (!p) return;
+    const p = pokemonData.find(p => p.id === id);
+    if (!p) return;
 
-            // Format level-up moves
-            let movesHtml = '';
-            if (p.movesByLevel && p.movesByLevel.length > 0) {
-                movesHtml = p.movesByLevel.map(m => 
-                    `<span class="move-tag level">[${m.level > 0 ? m.level : '0'}] ${m.move}</span>`
-                ).join(' ');
-            } else {
-                movesHtml = '<span style="color:#666;">No level-up moves recorded</span>';
-            }
+    // 🚨 Si es un Pokémon con datos faltantes, mostrar error claro
+    if (p.isMissing) {
+        modalBody.innerHTML = `
+            <div class="id">#${String(p.id).padStart(3, '0')}</div>
+            <div class="nombre" style="color:#ff6b6b;">❌ ${p.nombre}</div>
+            <div class="types">
+                <span class="type-badge" style="background:#c92a2a;color:white;">⚠️ ERROR</span>
+            </div>
+            <div class="pokedex-entry" style="border:2px solid #c92a2a;background:rgba(200,50,50,0.2);color:#ff8787;">
+                <strong>❌ DATOS FALTANTES</strong><br><br>
+                El Pokémon <strong>"${p.nombre}"</strong> está listado en <strong>dexorder.txt</strong>
+                pero no existe en <strong>pokemon.txt</strong>.<br><br>
+                <small style="color:#ffa8a8;">
+                    Verifica que el nombre coincida EXACTAMENTE (incluyendo mayúsculas/minúsculas).
+                </small>
+            </div>
+        `;
+        modal.classList.add('active');
+        return;
+    }
 
-            // Tutor Moves
-            let tutorHtml = '';
-            if (p.tutorMoves && p.tutorMoves.length > 0) {
-                tutorHtml = p.tutorMoves.map(m => 
-                    `<span class="move-tag tutor">${m}</span>`
-                ).join(' ');
-            } else {
-                tutorHtml = '<span style="color:#666;">None</span>';
-            }
+    // Format level-up moves
+    let movesHtml = '';
+    if (p.movesByLevel && p.movesByLevel.length > 0) {
+        movesHtml = p.movesByLevel.map(m => 
+            `<span class="move-tag level">[${m.level > 0 ? m.level : '0'}] ${m.move}</span>`
+        ).join(' ');
+    } else {
+        movesHtml = '<span style="color:#666;">No level-up moves recorded</span>';
+    }
 
-            // Egg Moves
-            let eggHtml = '';
-            if (p.eggMoves && p.eggMoves.length > 0) {
-                eggHtml = p.eggMoves.map(m => 
-                    `<span class="move-tag egg">${m}</span>`
-                ).join(' ');
-            } else {
-                eggHtml = '<span style="color:#666;">None</span>';
-            }
+    // Tutor Moves
+    let tutorHtml = '';
+    if (p.tutorMoves && p.tutorMoves.length > 0) {
+        tutorHtml = p.tutorMoves.map(m => 
+            `<span class="move-tag tutor">${m}</span>`
+        ).join(' ');
+    } else {
+        tutorHtml = '<span style="color:#666;">None</span>';
+    }
 
-            // Wild Held Items
-            let itemsHtml = '';
-            if (p.wildItemCommon || p.wildItemUncommon || p.wildItemRare) {
-                itemsHtml = `
-                    <div class="section-title">🎒 Wild Held Items</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin:8px 0;">
-                        ${p.wildItemCommon ? `<span style="background:#2c3e50;padding:2px 12px;border-radius:12px;font-size:0.85em;">Common: ${p.wildItemCommon}</span>` : ''}
-                        ${p.wildItemUncommon ? `<span style="background:#1a4f8a;padding:2px 12px;border-radius:12px;font-size:0.85em;">Uncommon: ${p.wildItemUncommon}</span>` : ''}
-                        ${p.wildItemRare ? `<span style="background:#6c3483;padding:2px 12px;border-radius:12px;font-size:0.85em;">Rare: ${p.wildItemRare}</span>` : ''}
+    // Egg Moves
+    let eggHtml = '';
+    if (p.eggMoves && p.eggMoves.length > 0) {
+        eggHtml = p.eggMoves.map(m => 
+            `<span class="move-tag egg">${m}</span>`
+        ).join(' ');
+    } else {
+        eggHtml = '<span style="color:#666;">None</span>';
+    }
+
+    // Wild Held Items
+    let itemsHtml = '';
+    if (p.wildItemCommon || p.wildItemUncommon || p.wildItemRare) {
+        itemsHtml = `
+            <div class="section-title">🎒 Wild Held Items</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin:8px 0;">
+                ${p.wildItemCommon ? `<span style="background:#2c3e50;padding:2px 12px;border-radius:12px;font-size:0.85em;">Common: ${p.wildItemCommon}</span>` : ''}
+                ${p.wildItemUncommon ? `<span style="background:#1a4f8a;padding:2px 12px;border-radius:12px;font-size:0.85em;">Uncommon: ${p.wildItemUncommon}</span>` : ''}
+                ${p.wildItemRare ? `<span style="background:#6c3483;padding:2px 12px;border-radius:12px;font-size:0.85em;">Rare: ${p.wildItemRare}</span>` : ''}
+            </div>
+        `;
+    }
+
+    // Extra info
+    let extraHtml = '';
+    const extras = [
+        { label: 'Height', value: p.height ? `${p.height}m` : null },
+        { label: 'Weight', value: p.weight ? `${p.weight}kg` : null },
+        { label: 'Catch Rate', value: p.catchRate || null },
+        { label: 'Happiness', value: p.happiness || null },
+        { label: 'Base Exp', value: p.baseExp || null },
+        { label: 'Gender', value: p.genderRatio || null },
+        { label: 'Growth Rate', value: p.growthRate || null },
+        { label: 'Egg Groups', value: p.eggGroups && p.eggGroups.length > 0 ? p.eggGroups.join(', ') : null },
+        { label: 'Hatch Steps', value: p.hatchSteps || null },
+        { label: 'Color', value: p.color || null },
+        { label: 'Shape', value: p.shape || null },
+        { label: 'Habitat', value: p.habitat || null },
+        { label: 'EV Yield', value: p.evs || null }
+    ];
+
+    const visibleExtras = extras.filter(e => e.value !== null && e.value !== 0 && e.value !== '');
+    if (visibleExtras.length > 0) {
+        extraHtml = `
+            <div class="section-title">📊 Additional Data</div>
+            <div class="extra-grid">
+                ${visibleExtras.map(e => `
+                    <div class="item">
+                        <span class="label">${e.label}:</span>
+                        <span class="value">${e.value}</span>
                     </div>
-                `;
-            }
+                `).join('')}
+            </div>
+        `;
+    }
 
-            // Extra info
-            let extraHtml = '';
-            const extras = [
-                { label: 'Height', value: p.height ? `${p.height}m` : null },
-                { label: 'Weight', value: p.weight ? `${p.weight}kg` : null },
-                { label: 'Catch Rate', value: p.catchRate || null },
-                { label: 'Happiness', value: p.happiness || null },
-                { label: 'Base Exp', value: p.baseExp || null },
-                { label: 'Gender', value: p.genderRatio || null },
-                { label: 'Growth Rate', value: p.growthRate || null },
-                { label: 'Egg Groups', value: p.eggGroups && p.eggGroups.length > 0 ? p.eggGroups.join(', ') : null },
-                { label: 'Hatch Steps', value: p.hatchSteps || null },
-                { label: 'Color', value: p.color || null },
-                { label: 'Shape', value: p.shape || null },
-                { label: 'Habitat', value: p.habitat || null },
-                { label: 'EV Yield', value: p.evs || null }
-            ];
-
-            const visibleExtras = extras.filter(e => e.value !== null && e.value !== 0 && e.value !== '');
-            if (visibleExtras.length > 0) {
-                extraHtml = `
-                    <div class="section-title">📊 Additional Data</div>
-                    <div class="extra-grid">
-                        ${visibleExtras.map(e => `
-                            <div class="item">
-                                <span class="label">${e.label}:</span>
-                                <span class="value">${e.value}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            modalBody.innerHTML = `
-                <div class="id">#${String(p.id).padStart(3, '0')}</div>
-                <div class="nombre">${p.nombre}</div>
-                ${p.category ? `<div class="category-text">${p.category}</div>` : ''}
-                <div class="types">
-                    ${p.tipos.map(t => `<span class="type-badge ${getTypeClass(t)}">${t.toUpperCase()}</span>`).join('')}
+    modalBody.innerHTML = `
+        <div class="id">#${String(p.id).padStart(3, '0')}</div>
+        <div class="nombre">${p.nombre}</div>
+        ${p.category ? `<div class="category-text">${p.category}</div>` : ''}
+        <div class="types">
+            ${p.tipos.map(t => `<span class="type-badge ${getTypeClass(t)}">${t.toUpperCase()}</span>`).join('')}
+        </div>
+        
+        <div class="bst-total">BST Total: ${p.bst}</div>
+        
+        <div class="stats-grid">
+            ${Object.entries(p.stats).map(([k, v]) => `
+                <div class="stat-item">
+                    <span class="label">${k.toUpperCase()}</span>
+                    <span class="value">${v}</span>
                 </div>
-                
-                <div class="bst-total">BST Total: ${p.bst}</div>
-                
-                <div class="stats-grid">
-                    ${Object.entries(p.stats).map(([k, v]) => `
-                        <div class="stat-item">
-                            <span class="label">${k.toUpperCase()}</span>
-                            <span class="value">${v}</span>
-                        </div>
-                    `).join('')}
-                </div>
+            `).join('')}
+        </div>
 
-                <div class="section-title">⚡ Abilities</div>
-                <div class="abilities">
-                    ${p.habilidades.map(h => `<span class="ability-tag">${h}</span>`).join('')}
-                    ${p.hOculta ? `<span class="ability-tag hidden">🔒 ${p.hOculta}</span>` : ''}
-                </div>
+        <div class="section-title">⚡ Abilities</div>
+        <div class="abilities">
+            ${p.habilidades.map(h => `<span class="ability-tag">${h}</span>`).join('')}
+            ${p.hOculta ? `<span class="ability-tag hidden">🔒 ${p.hOculta}</span>` : ''}
+        </div>
 
-                <div class="section-title">📈 Level-Up Moves</div>
-                <div class="moves-list">${movesHtml}</div>
+        <div class="section-title">📈 Level-Up Moves</div>
+        <div class="moves-list">${movesHtml}</div>
 
-                ${p.tutorMoves.length > 0 ? `
-                    <div class="section-title">📘 Tutor Moves</div>
-                    <div class="moves-list">${tutorHtml}</div>
-                ` : ''}
+        ${p.tutorMoves.length > 0 ? `
+            <div class="section-title">📘 Tutor Moves</div>
+            <div class="moves-list">${tutorHtml}</div>
+        ` : ''}
 
-                ${p.eggMoves.length > 0 ? `
-                    <div class="section-title">🥚 Egg Moves</div>
-                    <div class="moves-list">${eggHtml}</div>
-                ` : ''}
+        ${p.eggMoves.length > 0 ? `
+            <div class="section-title">🥚 Egg Moves</div>
+            <div class="moves-list">${eggHtml}</div>
+        ` : ''}
 
-                ${itemsHtml}
-                ${extraHtml}
+        ${itemsHtml}
+        ${extraHtml}
 
-                ${p.evolucion && p.evolucion !== '---' ? `
-                    <div class="section-title">🔄 Evolution</div>
-                    <div class="evolution">${p.evolucion}</div>
-                ` : ''}
+        ${p.evolucion && p.evolucion !== '---' ? `
+            <div class="section-title">🔄 Evolution</div>
+            <div class="evolution">${p.evolucion}</div>
+        ` : ''}
 
-                <div class="section-title">📖 Pokédex Entry</div>
-                <div class="pokedex-entry">${p.pokedex}</div>
-            `;
+        <div class="section-title">📖 Pokédex Entry</div>
+        <div class="pokedex-entry">${p.pokedex}</div>
+    `;
 
-            modal.classList.add('active');
-        }
+    modal.classList.add('active');
+}
 
         window.openModal = openModal;
         window.goToPage = goToPage;
