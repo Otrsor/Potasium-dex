@@ -274,7 +274,7 @@ Gorebyss
 Crustoctave
 Coralstra
 Tynamo
-Eelektric
+Eelektrik
 Eelektross
 Spectrofin
 Frilldeep
@@ -283,7 +283,7 @@ Malamar
 Chinchou
 Lanturn
 Skyder
-Aracnimb
+Arachnimb
 Snoozel
 Airret
 Mankyte
