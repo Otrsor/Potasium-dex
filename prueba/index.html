@@ -734,64 +734,113 @@
         // ============================================================
 
         function buildPokedex(pokemonMap, dexList) {
-            const result = [];
-            const missing = [];
+    const result = [];
+    const missing = [];
 
-            dexList.forEach((name, index) => {
-                const key = name.toLowerCase();
-                const pokemon = pokemonMap[key];
-                if (pokemon) {
-                    const clone = { ...pokemon };
-                    clone.id = index + 1;
-                    clone.nombre = name;
-                    result.push(clone);
-                } else {
-                    missing.push(name);
-                }
-            });
-
-            // Add Pokémon that are in pokemon.txt but not in dexorder.txt
-            const dexNames = new Set(dexList.map(n => n.toLowerCase()));
-            Object.keys(pokemonMap).forEach(key => {
-                if (!dexNames.has(key)) {
-                    const pokemon = { ...pokemonMap[key] };
-                    pokemon.id = result.length + 1;
-                    result.push(pokemon);
-                }
-            });
-
-            pokemonData = result;
-
-            // Show warning if Pokémon are missing
-            if (missing.length > 0) {
-                console.warn('Pokémon in dexorder.txt but not in pokemon.txt:', missing);
-                const warning = document.createElement('div');
-                warning.className = 'warning-box';
-                warning.innerHTML = `
-                    ⚠️ <strong>${missing.length}</strong> Pokémon listed in dexorder.txt not found in pokemon.txt:
-                    <span style="color:#aaa;">${missing.join(', ')}</span>
-                `;
-                const container = document.querySelector('.container');
-                const searchSection = document.querySelector('.search-section');
-                container.insertBefore(warning, searchSection);
-            }
-
-            if (pokemonData.length === 0) {
-                grid.innerHTML = `
-                    <div class="no-results" style="grid-column:1/-1;">
-                        <span>😅</span>
-                        No Pokémon found<br>
-                        <small style="font-size:0.7em;color:#666;">
-                            Check that pokemon.txt has the correct format.
-                        </small>
-                    </div>
-                `;
-                resultsInfo.textContent = '0 Pokémon found';
-                return;
-            }
-
-            initApp();
+    dexList.forEach((name, index) => {
+        const key = name.toLowerCase();
+        const pokemon = pokemonMap[key];
+        
+        if (pokemon) {
+            // ✅ Encontrado: usar sus datos
+            const clone = { ...pokemon };
+            clone.id = index + 1;
+            clone.nombre = name;
+            result.push(clone);
+        } else {
+            // ❌ NO encontrado: crear Pokémon fantasma con ERROR
+            missing.push(name);
+            const ghostPokemon = {
+                id: index + 1,
+                nombre: name,
+                tipos: ["unknown"],
+                stats: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+                bst: 0,
+                habilidades: ["ERROR: Missing data"],
+                hOculta: null,
+                movimientos: [],
+                movesByLevel: [],
+                tutorMoves: [],
+                eggMoves: [],
+                pokedex: `⚠️ ERROR: "${name}" no encontrado en pokemon.txt. Verifica que el nombre coincida exactamente.`,
+                evolucion: "---",
+                isMissing: true,  // 🔴 MARCADO COMO ERROR
+                height: 0,
+                weight: 0,
+                catchRate: 0,
+                happiness: 0,
+                baseExp: 0,
+                genderRatio: null,
+                growthRate: null,
+                eggGroups: [],
+                category: "❌ DATOS FALTANTES",
+                evs: {}
+            };
+            result.push(ghostPokemon);
         }
+    });
+
+    // Añadir Pokémon que están en pokemon.txt pero no en dexorder.txt
+    const dexNames = new Set(dexList.map(n => n.toLowerCase()));
+    Object.keys(pokemonMap).forEach(key => {
+        if (!dexNames.has(key)) {
+            const pokemon = { ...pokemonMap[key] };
+            pokemon.id = result.length + 1;
+            result.push(pokemon);
+        }
+    });
+
+    pokemonData = result;
+
+    // Mostrar advertencia si hay Pokémon faltantes
+    if (missing.length > 0) {
+        console.error('❌ Pokémon en dexorder.txt pero NO en pokemon.txt:', missing);
+        
+        // Eliminar advertencias anteriores
+        document.querySelectorAll('.warning-box').forEach(el => el.remove());
+        
+        const warning = document.createElement('div');
+        warning.className = 'warning-box';
+        warning.style.cssText = `
+            background: rgba(200, 50, 50, 0.25);
+            border: 2px solid #c92a2a;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            text-align: center;
+            color: #ff6b6b;
+        `;
+        warning.innerHTML = `
+            <strong>❌ ERROR: ${missing.length} Pokémon no encontrados</strong><br>
+            <span style="color:#ff8787;font-size:0.9em;display:block;margin:8px 0;">
+                ${missing.map(n => `"${n}"`).join(', ')}
+            </span>
+            <small style="color:#ffa8a8;font-size:0.85em;">
+                Estos nombres en <strong>dexorder.txt</strong> no coinciden con <strong>pokemon.txt</strong>.<br>
+                Aparecerán como tarjetas de ERROR (rojas).
+            </small>
+        `;
+        const container = document.querySelector('.container');
+        const searchSection = document.querySelector('.search-section');
+        container.insertBefore(warning, searchSection);
+    }
+
+    if (pokemonData.length === 0) {
+        grid.innerHTML = `
+            <div class="no-results" style="grid-column:1/-1;">
+                <span>❌</span>
+                No Pokémon found<br>
+                <small style="font-size:0.7em;color:#666;">
+                    Check that pokemon.txt has the correct format.
+                </small>
+            </div>
+        `;
+        resultsInfo.textContent = '0 Pokémon found';
+        return;
+    }
+
+    initApp();
+}
 
         // ============================================================
         //  🎨  RENDER
