@@ -1518,7 +1518,7 @@ Shape = Serpentine
 Habitat = Cave
 Category = Bomb Shroom
 Pokedex = This hot headed Pokemon is a danger to travelers that aren't watching their step in the forest. Following that, it's pretty much an instant explosion.
-Evolutions = KA-SHROOM,Level,21
+Evolutions = KASHROOM,Level,21
 #-------------------------------
 [KASHROOM]
 Name = Ka-Shroom
