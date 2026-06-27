@@ -685,71 +685,96 @@
         //  🧬  EVOLUTION PARSER 
         // ============================================================
         
-        function parseEvolution(evolutionText) {
-            if (!evolutionText || evolutionText === '---') return [];
+function parseEvolution(evolutionText) {
+    if (!evolutionText || evolutionText === '---') return [];
+    
+    try {
+        const parts = evolutionText.split(',').map(s => s.trim());
+        const evolutions = [];
+        let currentEvo = null;
+        let buffer = [];
+        
+        // Lista de palabras que NO son Pokémon (objetos, métodos, etc.)
+        const nonPokemonWords = [
+            'THUNDERSTONE', 'FIRESTONE', 'WATERSTONE', 'LEAFSTONE', 'MOONSTONE',
+            'DUSKSTONE', 'SHINYSTONE', 'DAWNSTONE', 'SUNSTONE', 'ICESTONE',
+            'DRAGONSCALE', 'METALCOAT', 'KINGSROCK', 'RAZORCLAW', 'RAZORFANG',
+            'DEEPSEATOOTH', 'DEEPSEASCALE', 'PRISMSCALE', 'PROTECTOR', 'ELECTIRIZER',
+            'MAGMARIZER', 'UPGRADE', 'DUBIOUSDISC', 'REAPERCLOTH', 'WHIPPEDDREAM',
+            'SACHET', 'OVALSTONE', 'LINKCABLE', 'AUSPICIOUSARMOR', 'MALICIOUSARMOR',
+            'LEADERSHIP', 'BLACKTOOTH', 'VALIANT', 'MIRRORHERB', 'CLEARAMULET',
+            'COVERTCLOAK', 'PUNCHINGGLOVE', 'BOOSTERENERGY', 'SOOTHEBELL',
+            'BANANA', 'DREAM', 'NIGHTMARE', 'CORRUPT'
+        ];
+        
+        // También palabras que son métodos
+        const methodWords = [
+            'Level', 'LevelMale', 'LevelFemale', 'LevelRain',
+            'Happiness', 'Item', 'Trade', 'TradeItem', 'TradeFemale', 'TradeMale',
+            'HasMove', 'HasMoveType', 'HasInParty', 'LocationFlag', 'Effort',
+            'HoldItem', 'DayHoldItem', 'TimeDay', 'TimeNight', 'TimeDusk',
+            'MaxHappiness', 'Move', 'Type', 'Day', 'Night', 'Dusk'
+        ];
+        
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
             
-            try {
-                const parts = evolutionText.split(',').map(s => s.trim());
-                const evolutions = [];
-                let currentEvo = null;
-                let buffer = [];
-                
-                for (let i = 0; i < parts.length; i++) {
-                    const part = parts[i];
-                    
-                    // Check if part is a Pokémon name (uppercase with letters)
-                    const isPokemonName = part === part.toUpperCase() && 
-                                          part.length > 0 && 
-                                          /[A-Z]/.test(part) && 
-                                          !/^[0-9]+$/.test(part);
-                    
-                    if (isPokemonName) {
-                        if (currentEvo) {
-                            if (buffer.length > 0) {
-                                currentEvo.condition = buffer.join(', ');
-                                buffer = [];
-                            }
-                            evolutions.push(currentEvo);
-                        }
-                        currentEvo = {
-                            target: part,
-                            method: null,
-                            condition: null
-                        };
-                    } else {
-                        if (!currentEvo) {
-                            currentEvo = {
-                                target: null,
-                                method: null,
-                                condition: null
-                            };
-                        }
-                        
-                        if (!currentEvo.method) {
-                            currentEvo.method = part;
-                        } else {
-                            buffer.push(part);
-                        }
-                    }
-                }
-                
+            // Verificar si es un Pokémon (mayúsculas, con letras, NO en listas negras)
+            const isPokemonName = part === part.toUpperCase() && 
+                                  part.length > 0 && 
+                                  /[A-Z]/.test(part) && 
+                                  !/^[0-9]+$/.test(part) &&
+                                  !nonPokemonWords.includes(part) &&
+                                  !methodWords.includes(part) &&
+                                  !part.startsWith('Level');
+            
+            if (isPokemonName) {
                 if (currentEvo) {
                     if (buffer.length > 0) {
                         currentEvo.condition = buffer.join(', ');
-                    }
-                    if (!currentEvo.target) {
-                        currentEvo.target = '???';
+                        buffer = [];
                     }
                     evolutions.push(currentEvo);
                 }
+                currentEvo = {
+                    target: part,
+                    method: null,
+                    condition: null
+                };
+            } else {
+                if (!currentEvo) {
+                    currentEvo = {
+                        target: null,
+                        method: null,
+                        condition: null
+                    };
+                }
                 
-                return evolutions;
-                
-            } catch (error) {
-                console.warn('Error parsing evolutions:', evolutionText, error);
-                return [];
+                if (!currentEvo.method) {
+                    currentEvo.method = part;
+                } else {
+                    buffer.push(part);
+                }
             }
         }
+        
+        if (currentEvo) {
+            if (buffer.length > 0) {
+                currentEvo.condition = buffer.join(', ');
+            }
+            if (!currentEvo.target) {
+                currentEvo.target = '???';
+            }
+            evolutions.push(currentEvo);
+        }
+        
+        return evolutions;
+        
+    } catch (error) {
+        console.warn('Error parsing evolutions:', evolutionText, error);
+        return [];
+    }
+}
         
         function getEvolutionMethodText(method, condition) {
             if (!method) return 'Evolves';
