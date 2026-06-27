@@ -546,6 +546,7 @@
                         switch (cleanKey) {
                             case 'Name':
                                 pokemon.nombre = cleanValue;
+                                pokemon.imagen = `images/${cleanValue.toLowerCase()}.png`;
                                 break;
                             case 'Types':
                                 pokemon.tipos = cleanValue.split(',').map(t => t.trim().toLowerCase());
@@ -951,6 +952,10 @@
     return `
         <div class="pokemon-card" onclick="openModal(${p.id})">
             <span class="id">#${String(p.id).padStart(3, '0')}</span>
+            <img src="${p.imagen || 'images/000.png'}" 
+                alt="${p.nombre}" 
+                style="width:80px;height:80px;display:block;margin:0 auto;border-radius:50%;background:#1a2a5e;padding:5px;object-fit:contain;"
+                onerror="this.src='images/000.png';">
             <div class="nombre">${p.nombre}</div>
             <div class="types">
                 ${p.tipos.map(t => `<span class="type-badge ${getTypeClass(t)}">${t}</span>`).join('')}
@@ -958,7 +963,7 @@
             <div class="bst">BST: ${p.bst}</div>
             <div class="bst-bar"><div class="fill" style="width:${Math.min((p.bst/780)*100, 100)}%"></div></div>
         </div>
-    `;
+`;
 }).join('');
             }
 
@@ -1110,6 +1115,10 @@
 
     modalBody.innerHTML = `
         <div class="id">#${String(p.id).padStart(3, '0')}</div>
+        <img src="${p.imagen || 'images/000.png'}" 
+            alt="${p.nombre}" 
+            style="width:120px;height:120px;display:block;margin:0 auto 15px;border-radius:50%;background:#1a2a5e;padding:10px;object-fit:contain;"
+            onerror="this.src='images/000.png';">
         <div class="nombre">${p.nombre}</div>
         ${p.category ? `<div class="category-text">${p.category}</div>` : ''}
         <div class="types">
