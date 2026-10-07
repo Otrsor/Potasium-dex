@@ -1517,7 +1517,7 @@ Shape = Serpentine
 Habitat = Cave
 Category = Bomb Shroom
 Pokedex = This hot headed Pokemon is a danger to travelers that aren't watching their step in the forest. Following that, it's pretty much an instant explosion.
-Evolutions = KASHROOM,Level,21
+Evolutions = KA-SHROOM,Level,21
 #-------------------------------
 [KASHROOM]
 Name = Ka-Shroom
@@ -2955,7 +2955,7 @@ Habitat = RoughTerrain
 Category = Armor Bird
 Pokedex = A Pokémon that has a body and wings of steel. People in the past used feathers fallen from Skarmory to make swords and knives.
 WildItemUncommon = METALCOAT
-Evolutions = SKARMAGEDDON,Effort
+Evolutions = SKARMAGEDN,Effort
 #-------------------------------
 [SKARMAGEDDON]
 Name = Skarmagedn
